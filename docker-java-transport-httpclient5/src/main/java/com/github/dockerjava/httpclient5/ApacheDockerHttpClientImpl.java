@@ -3,6 +3,7 @@ package com.github.dockerjava.httpclient5;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.transport.SSLConfig;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -36,6 +37,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,7 +90,14 @@ class ApacheDockerHttpClientImpl implements DockerHttpClient {
         );
         connectionManager.setMaxTotal(maxConnections);
         connectionManager.setDefaultMaxPerRoute(maxConnections);
+        RequestConfig defaultConfig = RequestConfig.custom().build();
+        // change default config for setting a timeout
+        RequestConfig customConfig = RequestConfig.copy(defaultConfig).setResponseTimeout(1, TimeUnit.MINUTES).build();
+
+
+        // inject custom config to client
         httpClient = HttpClients.custom()
+            .setDefaultRequestConfig(customConfig)
             .setRequestExecutor(new HijackingHttpRequestExecutor(null))
             .setConnectionManager(connectionManager)
             .build();
